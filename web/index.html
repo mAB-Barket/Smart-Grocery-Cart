@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Grocery Cart</title>
+    <!-- Favicon - Shopping Cart matching site theme -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 576 512'%3E%3Cpath fill='%2322C55E' d='M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="floating-shapes">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader">
+            <div class="cart-loader">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h2>Smart Grocery Cart</h2>
+            <p>Loading your shopping experience...</p>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Smart<span class="highlight">Cart</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#home" class="active">Home</a>
+            <a href="#shop">Shop</a>
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+        </div>
+        <div class="nav-actions">
+            <button class="nav-reset-btn" onclick="factoryReset()" title="Reset all data and start fresh">
+                <i class="fas fa-redo-alt"></i>
+            </button>
+            <div class="nav-cart" onclick="toggleCartPanel()">
+                <i class="fas fa-shopping-bag"></i>
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-shopping-cart"></i>
+                Your Smart Shopping Assistant
+            </div>
+            <h1 class="hero-title">
+                <span class="line1">Smart</span>
+                <span class="line2">Grocery</span>
+                <span class="line3">Cart</span>
+            </h1>
+            <p class="hero-subtitle">A smart and efficient way to manage your grocery shopping</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="scrollToShop()">
+                    <i class="fas fa-shopping-basket"></i>
+                    Start Shopping
+                </button>
+                <button class="btn btn-secondary" onclick="scrollToFeatures()">
+                    <i class="fas fa-info-circle"></i>
+                    Learn More
+                </button>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">Data Structures</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">10+</span>
+                    <span class="stat-label">Products</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">∞</span>
+                    <span class="stat-label">Undo Actions</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="floating-cart">
+                <div class="cart-3d">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="orbit orbit-1"><span>Array</span></div>
+                <div class="orbit orbit-2"><span>LinkedList</span></div>
+                <div class="orbit orbit-3"><span>Stack</span></div>
+                <div class="orbit orbit-4"><span>Queue</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shop Section -->
+    <section class="shop" id="shop">
+        <div class="section-header">
+            <span class="section-badge">Quick Add</span>
+            <h2>Frequent Items</h2>
+            <p>Your favorite products</p>
+        </div>
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be injected by JavaScript -->
+        </div>
+
+        <!-- Custom Item Section -->
+        <div class="custom-item-section">
+            <div class="section-header">
+                <span class="section-badge">Custom</span>
+                <h2>Add Your Own Item</h2>
+            </div>
+            <div class="custom-item-form">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Item Name</label>
+                    <input type="text" id="customName" placeholder="Enter item name...">
+                </div>
+                <div class="form-group">
+                    <label><span class="currency-label">Rs.</span> Price</label>
+                    <input type="number" id="customPrice" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-sort-numeric-up"></i> Quantity</label>
+                    <input type="number" id="customQuantity" placeholder="1" min="1" value="1">
+                </div>
+                <button class="btn btn-primary" onclick="addCustomItem()">
+                    <i class="fas fa-plus"></i> Add to Cart
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <span class="section-badge">Data Structures</span>
+            <h2>How It Works</h2>
+            <p>Four powerful data structures working together</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card" data-aos="fade-up">
+                <div class="feature-icon array-icon">
+                    <i class="fas fa-th"></i>
+                </div>
+                <h3>Array</h3>
+                <p class="feature-subtitle">Frequent Items</p>
+                <p>O(1) constant time access to your favorite items. Pre-loaded products ready for quick addition to cart.</p>
+                <div class="feature-code">
+                    <code>frequentItems[index] → O(1)</code>
+                </div>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-icon list-icon">
+                    <i class="fas fa-link"></i>
+                </div>
+                <h3>Linked List</h3>
+                <p class="feature-subtitle">Shopping Cart</p>
+                <p>Dynamic cart management with efficient insertion and deletion. Each item is a node connected to the next.</p>
+                <div class="feature-code">
+                    <code>head → node → node → null</code>
+                </div>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-icon stack-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3>Stack (LIFO)</h3>
+                <p class="feature-subtitle">Undo Operations</p>
+                <p>Last-In-First-Out principle. Every action is pushed onto the stack. Undo pops the last action.</p>
+                <div class="feature-code">
+                    <code>push() → pop() → LIFO</code>
+                </div>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-icon queue-icon">
+                    <i class="fas fa-stream"></i>
+                </div>
+                <h3>Queue (FIFO)</h3>
+                <p class="feature-subtitle">Checkout Process</p>
+                <p>First-In-First-Out processing. Items are enqueued from cart and dequeued during checkout.</p>
+                <div class="feature-code">
+                    <code>enqueue() → dequeue() → FIFO</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="about-content">
+            <div class="about-text">
+                <span class="section-badge">About</span>
+                <h2>How SmartCart Works</h2>
+                <p>SmartCart uses efficient algorithms to provide you with a seamless shopping experience.</p>
+                <ul class="about-list">
+                    <li><i class="fas fa-check-circle"></i> Manual implementation without STL</li>
+                    <li><i class="fas fa-check-circle"></i> Node-based pointer structures</li>
+                    <li><i class="fas fa-check-circle"></i> Real-world application simulation</li>
+                    <li><i class="fas fa-check-circle"></i> Interactive visualization</li>
+                </ul>
+            </div>
+            <div class="about-visual">
+                <div class="code-window">
+                    <div class="code-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                        <span class="code-title">Node.h (C++)</span>
+                    </div>
+                    <pre class="code-content"><code>class Node {
+private:
+    Product data;
+    Node* next_node;
+    
+public:
+    Node(Product val, Node* next)
+        : data(val), next_node(next) {}
+    
+    Product retrieve() const {
+        return data;
+    }
+    
+    Node* next() const {
+        return next_node;
+    }
+};</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
+            <button class="close-cart" onclick="toggleCartPanel()" title="Close cart">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Cart items will be injected here -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">Rs. 0.00</span>
+            </div>
+            <div class="cart-actions">
+                <button class="btn btn-clear" onclick="clearCart()" title="Clear all items">
+                    <i class="fas fa-trash-alt"></i> Clear
+                </button>
+                <button class="btn btn-undo" onclick="undoLastAction()">
+                    <i class="fas fa-undo"></i> Undo
+                </button>
+                <button class="btn btn-checkout" onclick="proceedToCheckout()">
+                    <i class="fas fa-credit-card"></i> Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCartPanel()"></div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content receipt-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-receipt"></i> Receipt</h2>
+                <button class="close-modal" onclick="closeCheckoutModal()" title="Close receipt">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="receipt-content" id="receiptContent">
+                <!-- Receipt will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Panel -->
+    <div class="visualization-panel" id="visualPanel">
+        <div class="visual-header">
+            <h3><i class="fas fa-project-diagram"></i> Data Structure Visualization</h3>
+            <button onclick="toggleVisualization()" title="Toggle visualization"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div class="visual-content">
+            <div class="visual-tabs">
+                <button class="visual-tab active" onclick="showVisual('linkedlist')">Linked List</button>
+                <button class="visual-tab" onclick="showVisual('stack')">Stack</button>
+                <button class="visual-tab" onclick="showVisual('queue')">Queue</button>
+            </div>
+            <div class="visual-display" id="visualDisplay">
+                <div class="linkedlist-visual" id="linkedlistVisual"></div>
+                <div class="stack-visual hidden-visual" id="stackVisual"></div>
+                <div class="queue-visual hidden-visual" id="queueVisual"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toggle Visualization Button (Eye Icon) -->
+    <button class="toggle-visual-btn" onclick="toggleVisualization()" title="View Data Structures">
+        <i class="fas fa-eye"></i>
+    </button>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Smart<span class="highlight">Cart</span></span>
+            </div>
+            <p>Smart Grocery Cart © 2025</p>
+            <p class="footer-note">
+                <i class="fas fa-code"></i> Made by mAB-Barket & Ismaeel
+            </p>
+        </div>
+    </footer>
+
+    <!-- Load App (connects to C++ via Python API) -->
+    <script src="js/app.js"></script>
+</body>
+</html>
