@@ -1,18 +1,3 @@
-/**
- * Smart Grocery Cart - Data Structures Project
- * Air University, 3rd Semester
- * 
- * LinkedList.h - Singly Linked List implementation (Shopping Cart)
- * 
- * Time Complexity:
- *   - Insert at head: O(1)
- *   - Insert at tail: O(n)
- *   - Delete at head: O(1)
- *   - Delete at tail: O(n)
- *   - Search: O(n)
- *   - Access by index: O(n)
- */
-
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
@@ -20,22 +5,19 @@
 #include "Node.h"
 using namespace std;
 
-/**
- * LinkedList Class
- * Used for dynamic shopping cart - items can be added/removed without fixed size.
- * Structure: head -> [node] -> [node] -> ... -> NULL
- */
 class LinkedList {
 private:
     Node* list_head;
     int item_count;
 
 public:
-    LinkedList() : list_head(nullptr), item_count(0) {}
+    LinkedList() {
+        list_head = nullptr;
+        item_count = 0;
+    }
 
     ~LinkedList() { clear(); }
 
-    // Accessors
     bool empty() const { return list_head == nullptr; }
     Node* head() const { return list_head; }
     int size() const { return item_count; }
@@ -70,7 +52,6 @@ public:
         return total;
     }
 
-    // Search - O(n)
     Node* find(string productName) const {
         for (Node* ptr = list_head; ptr != nullptr; ptr = ptr->next()) {
             if (ptr->retrieve().getName() == productName) {
@@ -89,14 +70,12 @@ public:
         return ptr->retrieve();
     }
 
-    // Insert at head - O(1)
     void insert_at_head(Product val) {
         Node* new_node = new Node(val, list_head);
         list_head = new_node;
         item_count++;
     }
 
-    // Insert at tail - O(n)
     void insert_at_tail(Product val) {
         if (empty()) {
             insert_at_head(val);
@@ -110,7 +89,6 @@ public:
         item_count++;
     }
 
-    // Insert at position - O(n)
     void insert_at_position(Product val, int position) {
         if (position < 1 || position > item_count + 1) return;
         if (position == 1) {
@@ -126,7 +104,6 @@ public:
         item_count++;
     }
 
-    // Push item - Insert or update quantity if exists
     void push_item(Product val) {
         Node* existing = find(val.getName());
         if (existing != nullptr) {
@@ -138,7 +115,6 @@ public:
         insert_at_tail(val);
     }
 
-    // Delete at head - O(1)
     Product delete_at_head() {
         if (empty()) return Product();
         Node* temp = list_head;
@@ -149,7 +125,6 @@ public:
         return deleted_item;
     }
 
-    // Delete at tail - O(n)
     Product delete_at_tail() {
         if (empty()) return Product();
         if (item_count == 1) return delete_at_head();
@@ -165,7 +140,6 @@ public:
         return deleted_item;
     }
 
-    // Delete at position - O(n)
     Product delete_at_position(int position) {
         if (position < 1 || position > item_count) return Product();
         if (position == 1) return delete_at_head();
@@ -182,7 +156,6 @@ public:
         return deleted_item;
     }
 
-    // Delete by name - O(n)
     bool delete_by_name(string productName) {
         if (empty()) return false;
         
@@ -205,14 +178,12 @@ public:
         return false;
     }
 
-    // Clear all nodes - O(n)
     void clear() {
         while (!empty()) {
             delete_at_head();
         }
     }
 
-    // Display
     void traverse() const {
         cout << "\n=== SHOPPING CART ===" << endl;
         if (empty()) {
@@ -243,4 +214,4 @@ public:
     }
 };
 
-#endif // LINKEDLIST_H
+#endif

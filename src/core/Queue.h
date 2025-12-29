@@ -1,16 +1,3 @@
-/**
- * Smart Grocery Cart - Data Structures Project
- * Air University, 3rd Semester
- * 
- * Queue.h - Queue implementation (FIFO) for Checkout process
- * 
- * Time Complexity (All O(1)):
- *   - enqueue(): Add to rear
- *   - dequeue(): Remove from front
- *   - front(): View front element
- *   - rear(): View rear element
- */
-
 #ifndef QUEUE_H
 #define QUEUE_H
 
@@ -18,11 +5,6 @@
 #include "Node.h"
 using namespace std;
 
-/**
- * Queue Class (FIFO - First In First Out)
- * Used for checkout process - first item added is processed first.
- * Structure: FRONT -> [node] -> [node] -> ... -> REAR
- */
 class Queue {
 private:
     Node* queue_front;
@@ -30,27 +12,27 @@ private:
     int queue_size;
 
 public:
-    Queue() : queue_front(nullptr), queue_rear(nullptr), queue_size(0) {}
+    Queue() {
+        queue_front = nullptr;
+        queue_rear = nullptr;
+        queue_size = 0;
+    }
     ~Queue() { clear(); }
 
-    // Accessors
     bool empty() const { return queue_front == nullptr; }
     int size() const { return queue_size; }
     Node* front_node() const { return queue_front; }
 
-    // View front element - O(1)
     Product front() const {
         if (empty()) return Product();
         return queue_front->retrieve();
     }
 
-    // View rear element - O(1)
     Product rear() const {
         if (empty()) return Product();
         return queue_rear->retrieve();
     }
 
-    // Enqueue - Add to rear - O(1)
     void enqueue(Product val) {
         Node* new_node = new Node(val, nullptr);
         
@@ -64,7 +46,6 @@ public:
         queue_size++;
     }
 
-    // Dequeue - Remove and return front element - O(1)
     Product dequeue() {
         if (empty()) return Product();
         
@@ -72,7 +53,6 @@ public:
         Product dequeued_item = temp->retrieve();
         queue_front = queue_front->next();
         
-        // If queue becomes empty, update rear
         if (queue_front == nullptr) {
             queue_rear = nullptr;
         }
@@ -82,7 +62,6 @@ public:
         return dequeued_item;
     }
 
-    // Clear all elements - O(n)
     void clear() {
         while (!empty()) {
             dequeue();
@@ -97,7 +76,6 @@ public:
         return total;
     }
 
-    // Display
     void traverse() const {
         cout << "\n=== CHECKOUT QUEUE (FIFO) ===" << endl;
         if (empty()) {
@@ -127,4 +105,4 @@ public:
     }
 };
 
-#endif // QUEUE_H
+#endif

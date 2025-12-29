@@ -1,15 +1,3 @@
-/**
- * Smart Grocery Cart - Data Structures Project
- * Air University, 3rd Semester
- * 
- * Array.h - Array implementation with O(1) access for frequent items
- * 
- * Time Complexity:
- *   - Access by index: O(1) - Direct address calculation
- *   - Search: O(n) - Linear search
- *   - Insert at end: O(1) - If space available
- */
-
 #ifndef ARRAY_H
 #define ARRAY_H
 
@@ -19,10 +7,6 @@ using namespace std;
 
 const int MAX_FREQUENT_ITEMS = 10;
 
-/**
- * FrequentItem Structure
- * Holds item data for the frequent items array.
- */
 struct FrequentItem {
     int id;
     string name;
@@ -31,20 +15,29 @@ struct FrequentItem {
     int purchaseCount;
     bool isCustom;
     
-    FrequentItem() : id(-1), name(""), price(0.0), icon(""), purchaseCount(0), isCustom(false) {}
+    FrequentItem() {
+        id = -1;
+        name = "";
+        price = 0.0;
+        icon = "";
+        purchaseCount = 0;
+        isCustom = false;
+    }
     
-    FrequentItem(int itemId, string n, double p, string i, int count = 0, bool custom = false) 
-        : id(itemId), name(n), price(p), icon(i), purchaseCount(count), isCustom(custom) {}
+    FrequentItem(int itemId, string n, double p, string i, int count = 0, bool custom = false) {
+        id = itemId;
+        name = n;
+        price = p;
+        icon = i;
+        purchaseCount = count;
+        isCustom = custom;
+    }
     
     bool operator>(const FrequentItem& other) const {
         return purchaseCount > other.purchaseCount;
     }
 };
 
-/**
- * CustomItemNode - Linked List node for custom items
- * Tracks user-added items that may be promoted to frequent items.
- */
 struct CustomItemNode {
     string name;
     double price;
@@ -52,14 +45,15 @@ struct CustomItemNode {
     int uniqueId;
     CustomItemNode* next;
     
-    CustomItemNode(string n, double p, int id) 
-        : name(n), price(p), purchaseCount(0), uniqueId(id), next(nullptr) {}
+    CustomItemNode(string n, double p, int id) {
+        name = n;
+        price = p;
+        purchaseCount = 0;
+        uniqueId = id;
+        next = nullptr;
+    }
 };
 
-/**
- * CustomItemsList - Linked List for dynamic custom items storage
- * Uses linked list because custom items have unknown count.
- */
 class CustomItemsList {
 private:
     CustomItemNode* head;
@@ -67,7 +61,11 @@ private:
     int nextId;
 
 public:
-    CustomItemsList() : head(nullptr), itemCount(0), nextId(1000) {}
+    CustomItemsList() {
+        head = nullptr;
+        itemCount = 0;
+        nextId = 1000;
+    }
     
     ~CustomItemsList() { clear(); }
     
@@ -151,11 +149,6 @@ public:
     CustomItemNode* getHead() const { return head; }
 };
 
-/**
- * FrequentItemsArray Class
- * Pre-loaded grocery items with O(1) access by index.
- * Array is used because size is fixed and we need fast access.
- */
 class FrequentItemsArray {
 private:
     FrequentItem items[MAX_FREQUENT_ITEMS];
@@ -163,7 +156,6 @@ private:
 
 public:
     FrequentItemsArray() : current_size(0) {
-        // Initialize with default grocery items
         addItem(0, "Milk (1 Liter)", 80, "🥛", 0);
         addItem(1, "Bread (Whole Wheat)", 60, "🍞", 0);
         addItem(2, "Eggs (Dozen)", 120, "🥚", 0);
@@ -177,7 +169,6 @@ public:
         sortByFrequency();
     }
 
-    // O(1) Access - Main advantage of arrays
     FrequentItem getItem(int index) const {
         if (index < 0 || index >= current_size) {
             return FrequentItem();
@@ -189,12 +180,10 @@ public:
         return getItem(index);
     }
 
-    // Accessors
     int size() const { return current_size; }
     bool isFull() const { return current_size >= MAX_FREQUENT_ITEMS; }
     bool isEmpty() const { return current_size == 0; }
 
-    // Add item - O(1) when space available
     bool addItem(int id, string name, double price, string icon, int purchaseCount = 0) {
         if (isFull()) return false;
         items[current_size] = FrequentItem(id, name, price, icon, purchaseCount);
@@ -202,7 +191,6 @@ public:
         return true;
     }
 
-    // Sort by frequency using Bubble Sort - O(n²)
     void sortByFrequency() {
         for (int i = 0; i < current_size - 1; i++) {
             for (int j = 0; j < current_size - i - 1; j++) {
@@ -228,7 +216,6 @@ public:
         return 0;
     }
 
-    // Find by ID - O(n) linear search
     bool incrementPurchaseCountById(int itemId) {
         for (int i = 0; i < current_size; i++) {
             if (items[i].id == itemId) {
@@ -239,7 +226,6 @@ public:
         return false;
     }
 
-    // Search by name - O(n)
     int search(string name) const {
         for (int i = 0; i < current_size; i++) {
             if (items[i].name == name) return i;
@@ -308,4 +294,4 @@ public:
     }
 };
 
-#endif // ARRAY_H
+#endif
