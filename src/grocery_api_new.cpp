@@ -6,33 +6,24 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * 
  * FILE: grocery_api.cpp
- * PURPOSE: C API wrapper for Python integration via ctypes
+ * PURPOSE: C++ API that implements all data structures (Array, LinkedList, Stack, Queue)
  * 
- * This file creates a shared library (DLL on Windows) that exposes C functions
- * which Python can call using the ctypes module.
- * 
- * NOTE: No price functionality - this is a shopping reminder app
- * 
- * COMPILATION (Windows):
- *   clang++ -shared -o grocery_api.dll grocery_api.cpp -std=c++17
+ * This is a shopping list reminder app - NO PRICES, just item names and quantities
  */
 
-#include <cstring>
-#include <cstdlib>
+#include <iostream>
 #include <sstream>
-
-// Include all data structure headers
-#include "core/Product.h"
-#include "core/Node.h"
+#include <string>
+#include <cstdlib>
+#include <cstring>
 #include "core/Array.h"
 #include "core/LinkedList.h"
 #include "core/Stack.h"
 #include "core/Queue.h"
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//                         DLL EXPORT MACROS
-// ═══════════════════════════════════════════════════════════════════════════════
+using namespace std;
 
+// Export functions for DLL
 #ifdef _WIN32
     #define EXPORT extern "C" __declspec(dllexport)
 #else
@@ -79,10 +70,9 @@ EXPORT int api_get_frequent_items_count() {
 
 /**
  * Get frequent item at index (O(1) access!)
- * Returns JSON string with item's unique ID
  */
 EXPORT const char* api_get_frequent_item(int index) {
-    FrequentItem item = frequentItems[index];  // O(1) array access!
+    FrequentItem item = frequentItems[index];
     
     ostringstream json;
     json << "{\"id\":" << item.id << ","
@@ -94,7 +84,6 @@ EXPORT const char* api_get_frequent_item(int index) {
 
 /**
  * Get all frequent items as JSON array
- * Items are sorted by purchaseCount (most frequent first)
  */
 EXPORT const char* api_get_all_frequent_items() {
     ostringstream json;
@@ -163,7 +152,7 @@ EXPORT bool api_is_cart_empty() {
 }
 
 /**
- * Get cart total quantity
+ * Get total quantity in cart
  */
 EXPORT int api_get_cart_total_quantity() {
     return cart.total_quantity();
@@ -214,10 +203,7 @@ EXPORT const char* api_undo_last_action() {
         return string_to_cstr("{\"error\":\"No actions to undo\"}");
     }
     
-    // Pop from stack (LIFO - last action first)
     Product lastAction = undoStack.pop();
-    
-    // Remove from cart
     cart.delete_by_name(lastAction.getName());
     
     ostringstream json;
@@ -281,21 +267,16 @@ EXPORT void api_clear_undo_stack() {
  * Check if a custom item should be promoted to frequent items
  */
 void checkAndPromoteCustomItems() {
-    // Get the most purchased custom item
     CustomItemNode* topCustom = customItems.getHighestPurchaseItem();
     if (topCustom == nullptr) {
         return;
     }
     
-    // Get the least purchased frequent item (after sorting, it's at the end)
     FrequentItem lastFrequent = frequentItems.getLastItem();
     
-    // If custom item has MORE purchases than the lowest frequent item → PROMOTE!
     if (topCustom->purchaseCount > lastFrequent.purchaseCount) {
-        // Find the index of the last item (lowest purchase count)
         int lastIndex = frequentItems.size() - 1;
         
-        // Replace the lowest frequent item with the top custom item
         frequentItems.replaceItem(
             lastIndex,
             topCustom->uniqueId,
@@ -303,35 +284,27 @@ void checkAndPromoteCustomItems() {
             topCustom->purchaseCount
         );
         
-        // Remove the promoted item from custom items list
         customItems.remove(topCustom->name);
-        
-        // Re-sort so the promoted item moves to its correct position
         frequentItems.sortByFrequency();
     }
 }
 
 /**
  * Move all cart items to checkout queue (FIFO)
- * Updates purchase counts for frequent items AND custom items
+ * Also updates purchase counts
  */
 EXPORT void api_start_checkout() {
-    // Move all items from cart (Linked List) to checkout queue (FIFO)
     Node* current = cart.head();
     
     while (current != nullptr) {
         Product item = current->retrieve();
         checkoutQueue.enqueue(item);
         
-        // Update purchase count for frequent items using unique ID
         int productId = item.getProductId();
         
-        // Check if this is a custom item (ID >= 1000 or ID == -1)
         if (productId == -1 || productId >= 1000) {
-            // Custom item - track it in the custom items linked list
             customItems.addOrUpdate(item.getName(), item.getQuantity());
         } else {
-            // Frequent item - update in the array
             for (int i = 0; i < item.getQuantity(); i++) {
                 frequentItems.incrementPurchaseCountById(productId);
             }
@@ -340,13 +313,9 @@ EXPORT void api_start_checkout() {
         current = current->next();
     }
     
-    // Re-sort frequent items by popularity (Bubble Sort)
     frequentItems.sortByFrequency();
-    
-    // Check if any custom item should be promoted
     checkAndPromoteCustomItems();
     
-    // Clear cart and undo stack
     cart.clear();
     undoStack.clear();
 }
@@ -368,7 +337,6 @@ EXPORT const char* api_process_checkout() {
     int totalItems = 0;
     bool first = true;
     
-    // Dequeue each item (FIFO - first item added is processed first)
     while (!checkoutQueue.empty()) {
         Product item = checkoutQueue.dequeue();
         totalItems += item.getQuantity();
@@ -418,12 +386,10 @@ EXPORT const char* api_get_queue_items() {
  * Restore a custom item with its purchase count (for data persistence)
  */
 EXPORT void api_restore_custom_item(const char* name, int purchaseCount, int itemId) {
-    // Check if this item was already promoted to frequent items
     bool foundInFrequent = false;
     for (int i = 0; i < frequentItems.size(); i++) {
         FrequentItem item = frequentItems[i];
         if (item.id == itemId) {
-            // Item was previously promoted - update its purchase count
             for (int j = 0; j < purchaseCount; j++) {
                 frequentItems.incrementPurchaseCountById(itemId);
             }
@@ -432,7 +398,6 @@ EXPORT void api_restore_custom_item(const char* name, int purchaseCount, int ite
         }
     }
     
-    // If not in frequent items, add to custom items list
     if (!foundInFrequent) {
         for (int i = 0; i < purchaseCount; i++) {
             customItems.addOrUpdate(name, 1);

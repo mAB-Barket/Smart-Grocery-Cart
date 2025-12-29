@@ -5,31 +5,17 @@
  *                              3rd Semester
  * ═══════════════════════════════════════════════════════════════════════════════
  * 
- * FILE: app.js
- * PURPOSE: Web interface that connects to C++ data structures via Python API
- * 
- * ARCHITECTURE:
- *   Browser (JS) ──HTTP──▶ Flask (Python) ──ctypes──▶ C++ DLL
- * 
- * This JS file ONLY handles UI. All data structure logic runs in C++!
- * For VIVA preparation, study the C++ code in /src/core/
+ * Shopping List Reminder App - helps users remember what to buy
+ * NO PRICES - just item names and quantities
  */
 
-// API Base URL
 const API_BASE = '/api';
 
-// LocalStorage Keys for persistence
-const STORAGE_KEYS = {
-    CART: 'smartCart_cartItems',
-    LAST_SYNC: 'smartCart_lastSync'
-};
-
-// DOM Elements
-let cartSidebar, cartOverlay, cartItems, cartCount, cartTotal;
+let cartSidebar, cartOverlay, cartItems, cartCount;
 let checkoutModal, receiptContent;
 let visualPanel, toastContainer;
+let resetModal;
 
-// Local cache of data (mirrors C++ state)
 let frequentItemsCache = [];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -38,9 +24,9 @@ let frequentItemsCache = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeElements();
-    loadFrequentItems();  // Load from C++ via API
+    loadFrequentItems();
     setupEventListeners();
-    restoreCartFromStorage();  // Restore saved cart data
+    restoreCartFromStorage();
     hideLoadingScreen();
 });
 
@@ -49,11 +35,11 @@ function initializeElements() {
     cartOverlay = document.getElementById('cartOverlay');
     cartItems = document.getElementById('cartItems');
     cartCount = document.getElementById('cartCount');
-    cartTotal = document.getElementById('cartTotal');
     checkoutModal = document.getElementById('checkoutModal');
     receiptContent = document.getElementById('receiptContent');
     visualPanel = document.getElementById('visualPanel');
     toastContainer = document.getElementById('toastContainer');
+    resetModal = document.getElementById('resetModal');
 }
 
 function hideLoadingScreen() {
@@ -65,69 +51,12 @@ function hideLoadingScreen() {
     }, 2000);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//                         LOCAL STORAGE - Cart Persistence
-//                    Saves cart data so it survives page refresh!
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Save cart items to localStorage
- * Called after every cart modification
- */
-function saveCartToStorage(items) {
-    try {
-        const cartData = {
-            items: items,
-            savedAt: new Date().toISOString()
-        };
-        localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cartData));
-    } catch (error) {
-        console.error('Failed to save cart to localStorage:', error);
-    }
-}
-
-/**
- * Load cart items from localStorage
- */
-function loadCartFromStorage() {
-    try {
-        const data = localStorage.getItem(STORAGE_KEYS.CART);
-        if (data) {
-            const cartData = JSON.parse(data);
-            return cartData.items;
-        }
-    } catch (error) {
-        console.error('Failed to load cart from localStorage:', error);
-    }
-    return [];
-}
-
-/**
- * Sync cart from C++ backend on page load
- * The C++ backend is the SINGLE SOURCE OF TRUTH
- * This ensures all browser windows stay in sync
- */
 async function restoreCartFromStorage() {
-    // Fetch from C++ backend - it's the authoritative source
-    // This ensures all browser windows stay in sync
     await updateCartUI();
     await updateVisualization();
 }
 
-/**
- * Clear cart from localStorage
- * Called after successful checkout
- */
-function clearCartStorage() {
-    try {
-        localStorage.removeItem(STORAGE_KEYS.CART);
-    } catch (error) {
-        console.error('Failed to clear cart storage:', error);
-    }
-}
-
 function setupEventListeners() {
-    // Navbar scroll effect
     window.addEventListener('scroll', function() {
         const navbar = document.querySelector('.navbar');
         if (navbar) {
@@ -140,11 +69,11 @@ function setupEventListeners() {
         updateActiveNavLink();
     });
 
-    // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeCartPanel();
             closeCheckoutModal();
+            closeResetModal();
         }
         if (e.ctrlKey && e.key === 'z') {
             e.preventDefault();
@@ -174,8 +103,7 @@ function updateActiveNavLink() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//                    ARRAY OPERATIONS - O(1) ACCESS
-//                    Data loaded from C++ FrequentItemsArray
+//                    ARRAY OPERATIONS - Frequent Items
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function loadFrequentItems() {
@@ -188,7 +116,7 @@ async function loadFrequentItems() {
             renderProducts();
         }
     } catch (error) {
-        console.error('Failed to load products from C++ API:', error);
+        console.error('Failed to load products:', error);
         showToast('Failed to load products. Is the server running?', 'error');
     }
 }
@@ -199,7 +127,6 @@ function renderProducts() {
     
     productsGrid.innerHTML = '';
 
-    // Display items from C++ Array - O(1) access per item!
     frequentItemsCache.forEach((item, index) => {
         const productCard = createProductCard(item, index);
         productsGrid.appendChild(productCard);
@@ -210,7 +137,6 @@ function createProductCard(item, index) {
     const card = document.createElement('div');
     card.className = 'product-card';
     
-    // Determine popularity badge based on purchaseCount
     let popularityBadge = '';
     if (item.purchaseCount >= 100) {
         popularityBadge = '<span class="popularity-badge hot">🔥 Best Seller</span>';
@@ -223,7 +149,6 @@ function createProductCard(item, index) {
     card.innerHTML = `
         ${popularityBadge}
         <h4>${item.name}</h4>
-        <div class="product-price">Rs. ${item.price.toFixed(2)}</div>
         <div class="purchase-info">
             <small><i class="fas fa-shopping-bag"></i> ${item.purchaseCount || 0} purchases</small>
         </div>
@@ -251,11 +176,10 @@ function adjustQty(index, delta) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //                    LINKED LIST OPERATIONS - Shopping Cart
-//                    Calls C++ LinkedList via API
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function addToCart(index) {
-    const item = frequentItemsCache[index];  // O(1) array access!
+    const item = frequentItemsCache[index];
     const qtyInput = document.getElementById(`qty-${index}`);
     const quantity = parseInt(qtyInput.value) || 1;
 
@@ -265,9 +189,8 @@ async function addToCart(index) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: item.name,
-                price: item.price,
                 quantity: quantity,
-                product_id: item.id  // Use unique item ID, not array index!
+                product_id: item.id
             })
         });
         
@@ -277,30 +200,23 @@ async function addToCart(index) {
             qtyInput.value = 1;
             await updateCartUI();
             await updateVisualization();
-            showToast(`Added ${quantity}x ${item.name} to cart`, 'success');
+            showToast(`Added ${quantity}x ${item.name} to list`, 'success');
         }
     } catch (error) {
         console.error('Failed to add to cart:', error);
-        showToast('Failed to add item to cart', 'error');
+        showToast('Failed to add item', 'error');
     }
 }
 
 async function addCustomItem() {
     const nameInput = document.getElementById('customName');
-    const priceInput = document.getElementById('customPrice');
     const qtyInput = document.getElementById('customQuantity');
 
     const name = nameInput.value.trim();
-    const price = parseFloat(priceInput.value);
     const quantity = parseInt(qtyInput.value) || 1;
 
     if (!name) {
         showToast('Please enter an item name', 'error');
-        return;
-    }
-
-    if (!price || price <= 0) {
-        showToast('Please enter a valid price', 'error');
         return;
     }
 
@@ -310,7 +226,6 @@ async function addCustomItem() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: name,
-                price: price,
                 quantity: quantity,
                 product_id: -1
             })
@@ -320,16 +235,15 @@ async function addCustomItem() {
         
         if (result.success) {
             nameInput.value = '';
-            priceInput.value = '';
             qtyInput.value = '1';
             
             await updateCartUI();
             await updateVisualization();
-            showToast(`Added ${quantity}x ${name} to cart`, 'success');
+            showToast(`Added ${quantity}x ${name} to list`, 'success');
         }
     } catch (error) {
         console.error('Failed to add custom item:', error);
-        showToast('Failed to add item to cart', 'error');
+        showToast('Failed to add item', 'error');
     }
 }
 
@@ -344,7 +258,7 @@ async function removeFromCart(position) {
         if (result.success) {
             await updateCartUI();
             await updateVisualization();
-            showToast(`Removed ${result.removed.name} from cart`, 'warning');
+            showToast(`Removed ${result.removed.name} from list`, 'warning');
         }
     } catch (error) {
         console.error('Failed to remove from cart:', error);
@@ -352,9 +266,6 @@ async function removeFromCart(position) {
     }
 }
 
-/**
- * Clear entire cart - removes all items from C++ backend and localStorage
- */
 async function clearCart() {
     try {
         const response = await fetch(`${API_BASE}/cart/clear`, {
@@ -364,35 +275,33 @@ async function clearCart() {
         const result = await response.json();
         
         if (result.success) {
-            clearCartStorage();  // Clear localStorage too
             await updateCartUI();
             await updateVisualization();
-            showToast('Cart cleared!', 'warning');
+            showToast('List cleared!', 'warning');
         }
     } catch (error) {
         console.error('Failed to clear cart:', error);
-        showToast('Failed to clear cart', 'error');
+        showToast('Failed to clear list', 'error');
     }
 }
 
-/**
- * Factory Reset - Clear ALL data and start completely fresh
- * This resets purchase counts, cart, and all saved data
- */
-async function factoryReset() {
-    // Confirm with user
-    const confirmed = confirm(
-        '⚠️ FACTORY RESET ⚠️\n\n' +
-        'This will:\n' +
-        '• Clear your cart\n' +
-        '• Reset ALL purchase counts to zero\n' +
-        '• Remove all custom items\n' +
-        '• Delete all saved data\n\n' +
-        'Are you sure you want to start fresh?'
-    );
-    
-    if (!confirmed) return;
-    
+// ═══════════════════════════════════════════════════════════════════════════════
+//                    FACTORY RESET - With Modal
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function showResetModal() {
+    if (resetModal) {
+        resetModal.classList.add('open');
+    }
+}
+
+function closeResetModal() {
+    if (resetModal) {
+        resetModal.classList.remove('open');
+    }
+}
+
+async function confirmFactoryReset() {
     try {
         const response = await fetch(`${API_BASE}/factory-reset`, {
             method: 'POST'
@@ -401,7 +310,7 @@ async function factoryReset() {
         const result = await response.json();
         
         if (result.success) {
-            clearCartStorage();
+            closeResetModal();
             await loadFrequentItems();
             await updateCartUI();
             await updateVisualization();
@@ -417,7 +326,6 @@ async function factoryReset() {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //                    STACK OPERATIONS - Undo (LIFO)
-//                    Calls C++ Stack via API
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function undoLastAction() {
@@ -443,25 +351,20 @@ async function undoLastAction() {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //                    QUEUE OPERATIONS - Checkout (FIFO)
-//                    Calls C++ Queue via API
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function proceedToCheckout() {
     try {
-        // First check if cart has items
         const cartResponse = await fetch(`${API_BASE}/cart`);
         const cartData = await cartResponse.json();
         
         if (cartData.size === 0) {
-            showToast('Your cart is empty!', 'error');
+            showToast('Your list is empty!', 'error');
             return;
         }
 
-        // Start checkout - moves items from Linked List to Queue
-        // This also updates purchase counts and re-sorts frequent items
         await fetch(`${API_BASE}/checkout/start`, { method: 'POST' });
         
-        // Process checkout - dequeues all items (FIFO)
         const response = await fetch(`${API_BASE}/checkout/process`, {
             method: 'POST'
         });
@@ -475,21 +378,16 @@ async function proceedToCheckout() {
             checkoutModal.classList.add('open');
             await updateVisualization();
             
-            // Clear localStorage after successful checkout
-            clearCartStorage();
-            
-            // Refresh frequent items
             await loadFrequentItems();
-            showToast('Checkout complete! Thank you for shopping.', 'success');
+            showToast('Shopping complete! Items tracked.', 'success');
         }
     } catch (error) {
         console.error('Failed to checkout:', error);
-        showToast('Failed to process checkout', 'error');
+        showToast('Failed to complete shopping', 'error');
     }
 }
 
 function generateReceipt(receipt) {
-    const transactionId = Math.floor(Math.random() * 900000) + 100000;
     const date = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -497,23 +395,18 @@ function generateReceipt(receipt) {
     });
 
     let itemsHTML = '';
-    let total = 0;
     receipt.items.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
         itemsHTML += `
             <div class="receipt-item">
                 <span class="receipt-item-name">${item.name}</span>
                 <span class="receipt-item-qty">x${item.quantity}</span>
-                <span class="receipt-item-price">Rs. ${itemTotal.toFixed(2)}</span>
             </div>
         `;
     });
 
     receiptContent.innerHTML = `
         <div class="receipt-header">
-            <h3>Smart Grocery Cart</h3>
-            <p>Transaction #${transactionId}</p>
+            <h3>Shopping Complete!</h3>
             <p>${date}</p>
         </div>
         <div class="receipt-items">
@@ -521,16 +414,13 @@ function generateReceipt(receipt) {
         </div>
         <div class="receipt-totals">
             <div class="receipt-row grand-total">
-                <span>Total:</span>
-                <span>Rs. ${total.toFixed(2)}</span>
+                <span>Total Items:</span>
+                <span>${receipt.totalItems}</span>
             </div>
         </div>
         <div class="receipt-footer">
-            <p class="thanks">Thank you for shopping with us!</p>
-            <p>Your order has been processed successfully</p>
-            <p style="margin-top: 15px; font-size: 11px; color: #94a3b8;">
-                Powered by Smart Grocery Cart System
-            </p>
+            <p class="thanks">Items have been tracked!</p>
+            <p>Your purchase history has been updated</p>
         </div>
     `;
 }
@@ -546,11 +436,7 @@ async function updateCartUI() {
         
         if (result.success) {
             if (cartCount) cartCount.textContent = result.size;
-            if (cartTotal) cartTotal.textContent = `Rs. ${result.total.toFixed(2)}`;
             renderCartItems(result.data);
-            
-            // Save cart to localStorage for persistence
-            saveCartToStorage(result.data);
         }
     } catch (error) {
         console.error('Failed to update cart UI:', error);
@@ -563,9 +449,9 @@ function renderCartItems(items) {
     if (items.length === 0) {
         cartItems.innerHTML = `
             <div class="empty-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <p>Your cart is empty</p>
-                <p style="font-size: 12px; color: #94a3b8;">Cart = C++ Linked List</p>
+                <i class="fas fa-clipboard-list"></i>
+                <p>Your shopping list is empty</p>
+                <p style="font-size: 12px; color: #94a3b8;">Add items to remember what to buy</p>
             </div>
         `;
         return;
@@ -573,28 +459,19 @@ function renderCartItems(items) {
 
     cartItems.innerHTML = '';
     items.forEach((item, index) => {
-        const icon = getItemIcon(item.name);
         const cartItem = document.createElement('div');
         cartItem.className = 'cart-item';
         cartItem.innerHTML = `
-            <div class="cart-item-icon">${icon}</div>
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">Rs. ${item.price.toFixed(2)} each</div>
-                <div class="cart-item-qty">Qty: ${item.quantity}</div>
+                <div class="cart-item-qty">Quantity: ${item.quantity}</div>
             </div>
-            <div class="cart-item-total">Rs. ${item.total.toFixed(2)}</div>
             <button class="remove-item" onclick="removeFromCart(${index + 1})">
                 <i class="fas fa-trash"></i>
             </button>
         `;
         cartItems.appendChild(cartItem);
     });
-}
-
-function getItemIcon(name) {
-    const item = frequentItemsCache.find(f => f.name === name);
-    return item ? item.icon : '📦';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -617,7 +494,6 @@ function closeCheckoutModal() {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //                         VISUALIZATION
-//                    Shows actual C++ data structure states
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function toggleVisualization() {
@@ -654,7 +530,7 @@ async function updateLinkedListVisual() {
         const items = result.data || [];
 
         if (items.length === 0) {
-            container.innerHTML = '<div class="visual-empty">head -> NULL (empty C++ linked list)</div>';
+            container.innerHTML = '<div class="visual-empty">head -> NULL (empty list)</div>';
             return;
         }
 
@@ -664,8 +540,8 @@ async function updateLinkedListVisual() {
             html += `
                 <div class="visual-node">
                     <div class="node-box">
-                        <div class="node-name">${item.name.substring(0, 10)}...</div>
-                        <div class="node-price">Rs. ${item.price.toFixed(2)}</div>
+                        <div class="node-name">${item.name.substring(0, 12)}${item.name.length > 12 ? '...' : ''}</div>
+                        <div class="node-qty">x${item.quantity}</div>
                     </div>
                     <span class="node-arrow">-></span>
                 </div>
@@ -675,7 +551,7 @@ async function updateLinkedListVisual() {
         html += '<div class="node-null">NULL</div>';
         container.innerHTML = html;
     } catch (error) {
-        container.innerHTML = '<div class="visual-empty">Error loading linked list</div>';
+        container.innerHTML = '<div class="visual-empty">Error loading</div>';
     }
 }
 
@@ -689,7 +565,7 @@ async function updateStackVisual() {
         const items = result.data || [];
 
         if (items.length === 0) {
-            container.innerHTML = '<div class="visual-empty">C++ Stack is empty (LIFO)</div>';
+            container.innerHTML = '<div class="visual-empty">Stack is empty (LIFO)</div>';
             return;
         }
 
@@ -698,9 +574,9 @@ async function updateStackVisual() {
             html += `
                 <div class="visual-node">
                     <div class="node-box" style="background: ${index === 0 ? 'var(--gradient-3)' : 'var(--gradient-1)'}">
-                        ${index === 0 ? '<div class="stack-label"><- TOP (pop here)</div>' : ''}
+                        ${index === 0 ? '<div class="stack-label"><- TOP</div>' : ''}
                         <div class="node-name">${item.name.substring(0, 15)}</div>
-                        <div class="node-price">Rs. ${item.price.toFixed(2)}</div>
+                        <div class="node-qty">x${item.quantity}</div>
                     </div>
                 </div>
             `;
@@ -708,7 +584,7 @@ async function updateStackVisual() {
 
         container.innerHTML = html;
     } catch (error) {
-        container.innerHTML = '<div class="visual-empty">Error loading stack</div>';
+        container.innerHTML = '<div class="visual-empty">Error loading</div>';
     }
 }
 
@@ -722,7 +598,7 @@ async function updateQueueVisual() {
         const items = result.data || [];
 
         if (items.length === 0) {
-            container.innerHTML = '<div class="visual-empty">C++ Queue is empty (FIFO)</div>';
+            container.innerHTML = '<div class="visual-empty">Queue is empty (FIFO)</div>';
             return;
         }
 
@@ -732,8 +608,8 @@ async function updateQueueVisual() {
             html += `
                 <div class="visual-node">
                     <div class="node-box" style="background: ${index === items.length - 1 ? 'var(--gradient-2)' : 'var(--gradient-1)'}">
-                        <div class="node-name">${item.name.substring(0, 10)}...</div>
-                        <div class="node-price">Rs. ${item.price.toFixed(2)}</div>
+                        <div class="node-name">${item.name.substring(0, 12)}${item.name.length > 12 ? '...' : ''}</div>
+                        <div class="node-qty">x${item.quantity}</div>
                     </div>
                     <span class="node-arrow">-></span>
                 </div>
@@ -743,7 +619,7 @@ async function updateQueueVisual() {
         html += '<div class="node-null"><- REAR</div>';
         container.innerHTML = html;
     } catch (error) {
-        container.innerHTML = '<div class="visual-empty">Error loading queue</div>';
+        container.innerHTML = '<div class="visual-empty">Error loading</div>';
     }
 }
 
@@ -788,9 +664,5 @@ function scrollToShop() {
 function scrollToFeatures() {
     document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//                         CONSOLE INFO
-// ═══════════════════════════════════════════════════════════════════════════════
 
 console.log('%c🛒 Smart Grocery Cart', 'font-size: 20px; font-weight: bold; color: #22C55E;');

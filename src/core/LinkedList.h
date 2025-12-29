@@ -2,8 +2,18 @@
 #define LINKEDLIST_H
 
 #include <iostream>
+#include <cctype>
 #include "Node.h"
 using namespace std;
+
+// Case-insensitive string comparison
+inline bool strEqualsIgnoreCase(const string& a, const string& b) {
+    if (a.size() != b.size()) return false;
+    for (size_t i = 0; i < a.size(); i++) {
+        if (tolower(a[i]) != tolower(b[i])) return false;
+    }
+    return true;
+}
 
 class LinkedList {
 private:
@@ -36,14 +46,6 @@ public:
         return ptr->retrieve();
     }
 
-    double calculate_total() const {
-        double total = 0.0;
-        for (Node* ptr = list_head; ptr != nullptr; ptr = ptr->next()) {
-            total += ptr->retrieve().total();
-        }
-        return total;
-    }
-
     int total_quantity() const {
         int total = 0;
         for (Node* ptr = list_head; ptr != nullptr; ptr = ptr->next()) {
@@ -54,7 +56,7 @@ public:
 
     Node* find(string productName) const {
         for (Node* ptr = list_head; ptr != nullptr; ptr = ptr->next()) {
-            if (ptr->retrieve().getName() == productName) {
+            if (strEqualsIgnoreCase(ptr->retrieve().getName(), productName)) {
                 return ptr;
             }
         }
@@ -159,14 +161,14 @@ public:
     bool delete_by_name(string productName) {
         if (empty()) return false;
         
-        if (list_head->retrieve().getName() == productName) {
+        if (strEqualsIgnoreCase(list_head->retrieve().getName(), productName)) {
             delete_at_head();
             return true;
         }
         
         Node* ptr = list_head;
         while (ptr->next() != nullptr) {
-            if (ptr->next()->retrieve().getName() == productName) {
+            if (strEqualsIgnoreCase(ptr->next()->retrieve().getName(), productName)) {
                 Node* to_delete = ptr->next();
                 ptr->set_next(to_delete->next());
                 delete to_delete;
@@ -193,11 +195,10 @@ public:
         int pos = 1;
         for (Node* ptr = list_head; ptr != nullptr; ptr = ptr->next()) {
             Product p = ptr->retrieve();
-            cout << "[" << pos++ << "] " << p.getName() << " - $" 
-                 << p.getPrice() << " x " << p.getQuantity() 
-                 << " = $" << p.total() << endl;
+            cout << "[" << pos++ << "] " << p.getName() 
+                 << " x " << p.getQuantity() << endl;
         }
-        cout << "Total: $" << calculate_total() << endl;
+        cout << "Total items: " << total_quantity() << endl;
     }
 
     void display_visual() const {

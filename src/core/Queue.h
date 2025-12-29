@@ -68,10 +68,10 @@ public:
         }
     }
 
-    double calculate_total() const {
-        double total = 0.0;
+    int calculate_total_quantity() const {
+        int total = 0;
         for (Node* ptr = queue_front; ptr != nullptr; ptr = ptr->next()) {
-            total += ptr->retrieve().total();
+            total += ptr->retrieve().getQuantity();
         }
         return total;
     }
@@ -84,11 +84,11 @@ public:
         }
         cout << "FRONT -> ";
         for (Node* ptr = queue_front; ptr != nullptr; ptr = ptr->next()) {
-            cout << "[" << ptr->retrieve().getName() << "]";
+            cout << "[" << ptr->retrieve().getName() << " x" << ptr->retrieve().getQuantity() << "]";
             if (ptr->next() != nullptr) cout << " -> ";
         }
         cout << " <- REAR" << endl;
-        cout << "Total: $" << calculate_total() << endl;
+        cout << "Total Items: " << calculate_total_quantity() << endl;
     }
 
     void display_visual() const {

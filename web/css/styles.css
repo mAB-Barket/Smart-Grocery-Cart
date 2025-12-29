@@ -1496,6 +1496,127 @@ section {
 }
 
 /* =======================
+   Reset Modal
+   ======================= */
+.reset-modal {
+    max-width: 450px;
+}
+
+.reset-modal-body {
+    padding: 30px;
+    text-align: center;
+}
+
+.reset-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.reset-icon i {
+    font-size: 36px;
+    color: white;
+}
+
+@keyframes pulse-warning {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+    }
+}
+
+.reset-modal-body h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: var(--white);
+}
+
+.reset-modal-body > p {
+    color: var(--gray-light);
+    margin-bottom: 20px;
+}
+
+.reset-list {
+    list-style: none;
+    text-align: left;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.reset-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    color: var(--gray-light);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reset-list li:last-child {
+    border-bottom: none;
+}
+
+.reset-list li i {
+    color: var(--danger);
+    width: 20px;
+}
+
+.reset-warning {
+    color: var(--accent) !important;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.reset-modal-actions {
+    display: flex;
+    gap: 15px;
+    padding: 20px 30px 30px;
+    justify-content: center;
+}
+
+.reset-modal-actions .btn {
+    min-width: 150px;
+    padding: 14px 28px;
+    font-size: 16px;
+}
+
+.btn-cancel {
+    background: var(--card-bg);
+    color: var(--gray-light);
+    border: 1px solid var(--border);
+}
+
+.btn-cancel:hover {
+    background: var(--dark-light);
+    color: var(--white);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+
+/* =======================
    Visualization Panel
    ======================= */
 .visualization-panel {

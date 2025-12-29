@@ -1,86 +1,77 @@
 {
   "frequent_items": [
     {
-      "id": 1000,
-      "name": "Ismaeel",
-      "price": 50,
-      "icon": "🆕",
-      "purchaseCount": 7,
-      "isCustom": true
-    },
-    {
-      "id": 5,
-      "name": "Chicken Breast",
-      "price": 350,
-      "icon": "🍗",
-      "purchaseCount": 2,
-      "isCustom": false
-    },
-    {
-      "id": 6,
-      "name": "Rice (5 kg bag)",
-      "price": 450,
-      "icon": "🍚",
-      "purchaseCount": 2,
-      "isCustom": false
-    },
-    {
       "id": 0,
-      "name": "Milk (1 Liter)",
-      "price": 80,
-      "icon": "🥛",
-      "purchaseCount": 1,
+      "name": "Milk",
+      "purchaseCount": 0,
       "isCustom": false
-    },
-    {
-      "id": 7,
-      "name": "Pasta",
-      "price": 90,
-      "icon": "🍝",
-      "purchaseCount": 1,
-      "isCustom": false
-    },
-    {
-      "id": 1001,
-      "name": "Ismaeel",
-      "price": 50,
-      "icon": "🆕",
-      "purchaseCount": 1,
-      "isCustom": true
     },
     {
       "id": 1,
-      "name": "Bread (Whole Wheat)",
-      "price": 60,
-      "icon": "🍞",
-      "purchaseCount": 1,
+      "name": "Bread",
+      "purchaseCount": 0,
       "isCustom": false
     },
     {
       "id": 2,
-      "name": "Eggs (Dozen)",
-      "price": 120,
-      "icon": "🥚",
-      "purchaseCount": 1,
+      "name": "Eggs",
+      "purchaseCount": 0,
       "isCustom": false
     },
     {
       "id": 3,
       "name": "Butter",
-      "price": 150,
-      "icon": "🧈",
       "purchaseCount": 0,
       "isCustom": false
     },
     {
       "id": 4,
-      "name": "Cheese (Cheddar)",
-      "price": 250,
-      "icon": "🧀",
+      "name": "Cheese",
+      "purchaseCount": 0,
+      "isCustom": false
+    },
+    {
+      "id": 5,
+      "name": "Chicken",
+      "purchaseCount": 0,
+      "isCustom": false
+    },
+    {
+      "id": 6,
+      "name": "Rice",
+      "purchaseCount": 0,
+      "isCustom": false
+    },
+    {
+      "id": 7,
+      "name": "Pasta",
+      "purchaseCount": 0,
+      "isCustom": false
+    },
+    {
+      "id": 8,
+      "name": "Tomato Sauce",
+      "purchaseCount": 0,
+      "isCustom": false
+    },
+    {
+      "id": 9,
+      "name": "Orange Juice",
       "purchaseCount": 0,
       "isCustom": false
     }
   ],
-  "cart_items": [],
-  "last_updated": "2025-12-29 13:18:56"
+  "cart_items": [
+    {
+      "name": "Milk",
+      "quantity": 1,
+      "product_id": 0
+    },
+    {
+      "name": "Orange Juice",
+      "quantity": 1,
+      "product_id": 9
+    }
+  ],
+  "last_updated": "2025-12-29 23:39:56"
 }
