@@ -200,7 +200,7 @@ async function addToCart(index) {
             qtyInput.value = 1;
             await updateCartUI();
             await updateVisualization();
-            showToast(`Added ${quantity}x ${item.name} to list`, 'success');
+            showToast(`Added ${quantity}x ${item.name} to cart`, 'success');
         }
     } catch (error) {
         console.error('Failed to add to cart:', error);
@@ -239,7 +239,7 @@ async function addCustomItem() {
             
             await updateCartUI();
             await updateVisualization();
-            showToast(`Added ${quantity}x ${name} to list`, 'success');
+            showToast(`Added ${quantity}x ${name} to cart`, 'success');
         }
     } catch (error) {
         console.error('Failed to add custom item:', error);
@@ -258,7 +258,7 @@ async function removeFromCart(position) {
         if (result.success) {
             await updateCartUI();
             await updateVisualization();
-            showToast(`Removed ${result.removed.name} from list`, 'warning');
+            showToast(`Removed ${result.removed.name} from cart`, 'warning');
         }
     } catch (error) {
         console.error('Failed to remove from cart:', error);
@@ -277,11 +277,11 @@ async function clearCart() {
         if (result.success) {
             await updateCartUI();
             await updateVisualization();
-            showToast('List cleared!', 'warning');
+            showToast('Cart cleared!', 'warning');
         }
     } catch (error) {
         console.error('Failed to clear cart:', error);
-        showToast('Failed to clear list', 'error');
+        showToast('Failed to clear cart', 'error');
     }
 }
 
@@ -359,7 +359,7 @@ async function proceedToCheckout() {
         const cartData = await cartResponse.json();
         
         if (cartData.size === 0) {
-            showToast('Your list is empty!', 'error');
+            showToast('Your cart is empty!', 'error');
             return;
         }
 
@@ -449,9 +449,9 @@ function renderCartItems(items) {
     if (items.length === 0) {
         cartItems.innerHTML = `
             <div class="empty-cart">
-                <i class="fas fa-clipboard-list"></i>
-                <p>Your shopping list is empty</p>
-                <p style="font-size: 12px; color: #94a3b8;">Add items to remember what to buy</p>
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <p style="font-size: 12px; color: #94a3b8;">Add items to get started</p>
             </div>
         `;
         return;

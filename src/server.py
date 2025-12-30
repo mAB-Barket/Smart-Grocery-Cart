@@ -133,6 +133,10 @@ def save_all_data():
         return False
 
 def load_all_data():
+    """
+    Load all data from JSON file and restore to unified C++ storage.
+    All items (default and custom) are stored in ONE array - top 10 shown as frequent.
+    """
     if not DLL_LOADED:
         return False
     
@@ -144,24 +148,23 @@ def load_all_data():
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
+        # Load all items (unified storage - both default and custom)
         items = data.get('frequent_items', [])
         for item in items:
             item_id = item.get('id', -1)
             purchase_count = item.get('purchaseCount', 0)
-            is_custom = item.get('isCustom', False)
+            name = item.get('name', '')
             
-            if item_id >= 0 and purchase_count > 0:
-                if is_custom or item_id >= 1000:
-                    name = item.get('name', '')
-                    grocery_lib.api_restore_custom_item(
-                        name.encode('utf-8'),
-                        ctypes.c_int(purchase_count),
-                        ctypes.c_int(item_id)
-                    )
-                else:
-                    for _ in range(purchase_count):
-                        grocery_lib.api_increment_purchase_count_by_id(item_id)
+            if item_id >= 0 and purchase_count > 0 and name:
+                # Use api_restore_custom_item for ALL items
+                # It handles both default (id 0-9) and custom (id >= 1000) items
+                grocery_lib.api_restore_custom_item(
+                    name.encode('utf-8'),
+                    ctypes.c_int(purchase_count),
+                    ctypes.c_int(item_id)
+                )
         
+        # Restore cart items
         cart_items = data.get('cart_items', [])
         for cart_item in cart_items:
             name = cart_item.get('name', '')
@@ -176,8 +179,8 @@ def load_all_data():
                 )
         
         cart_count = len(cart_items)
-        print(f"✅ Data loaded: {len(items)} frequent items, {cart_count} cart items")
-        print("📊 Previous data restored!")
+        print(f"✅ Data loaded: {len(items)} items, {cart_count} cart items")
+        print("📊 Previous data restored (top 10 shown as frequent items)!")
         return True
     except Exception as e:
         print(f"❌ Failed to load data: {e}")

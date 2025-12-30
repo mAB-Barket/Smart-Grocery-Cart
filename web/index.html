@@ -125,13 +125,15 @@
                 <h2>Add Your Own Item</h2>
             </div>
             <div class="custom-item-form">
-                <div class="form-group">
-                    <label><i class="fas fa-tag"></i> Item Name</label>
-                    <input type="text" id="customName" placeholder="Enter item name...">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-sort-numeric-up"></i> Quantity</label>
-                    <input type="number" id="customQuantity" placeholder="1" min="1" value="1">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Item Name</label>
+                        <input type="text" id="customName" placeholder="Enter item name...">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-sort-numeric-up"></i> Quantity</label>
+                        <input type="number" id="customQuantity" placeholder="1" min="1" value="1">
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="addCustomItem()">
                     <i class="fas fa-plus"></i> Add to List
@@ -201,13 +203,14 @@
             <div class="about-text">
                 <span class="section-badge">About</span>
                 <h2>How SmartCart Works</h2>
-                <p>SmartCart uses efficient algorithms to provide you with a seamless shopping experience.</p>
+                <p>SmartCart is an intelligent shopping list manager that learns from your habits. The more you shop, the smarter it gets — automatically tracking your most purchased items.</p>
                 <ul class="about-list">
-                    <li><i class="fas fa-check-circle"></i> Manual implementation without STL</li>
-                    <li><i class="fas fa-check-circle"></i> Node-based pointer structures</li>
-                    <li><i class="fas fa-check-circle"></i> Real-world application simulation</li>
-                    <li><i class="fas fa-check-circle"></i> Interactive visualization</li>
+                    <li><i class="fas fa-check-circle"></i> Smart frequency tracking — your top items rise to the top</li>
+                    <li><i class="fas fa-check-circle"></i> Unlimited undo — made a mistake? Just undo it</li>
+                    <li><i class="fas fa-check-circle"></i> FIFO checkout queue — items processed in order added</li>
+                    <li><i class="fas fa-check-circle"></i> Persistent storage — your data saves automatically</li>
                 </ul>
+                <p class="about-tech"><i class="fas fa-code"></i> Built with custom C++ data structures: Array, LinkedList, Stack & Queue</p>
             </div>
             <div class="about-visual">
                 <div class="code-window">

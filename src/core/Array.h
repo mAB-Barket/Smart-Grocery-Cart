@@ -7,7 +7,10 @@
 #include "Product.h"
 using namespace std;
 
-const int MAX_FREQUENT_ITEMS = 10;
+// Maximum items to display as "frequent items"
+const int MAX_DISPLAY_ITEMS = 10;
+// Maximum total items we can store
+const int MAX_TOTAL_ITEMS = 1000;
 
 // Case-insensitive string comparison helper
 inline bool equalsIgnoreCase(const string& a, const string& b) {
@@ -18,11 +21,14 @@ inline bool equalsIgnoreCase(const string& a, const string& b) {
     return true;
 }
 
+/**
+ * FrequentItem - Represents any item (default or custom) with purchase tracking
+ */
 struct FrequentItem {
     int id;
     string name;
     int purchaseCount;
-    bool isCustom;
+    bool isCustom;  // true if user-added, false if default item
     
     FrequentItem() {
         id = -1;
@@ -43,135 +49,49 @@ struct FrequentItem {
     }
 };
 
-struct CustomItemNode {
-    string name;
-    int purchaseCount;
-    int uniqueId;
-    CustomItemNode* next;
-    
-    CustomItemNode(string n, int id) {
-        name = n;
-        purchaseCount = 0;
-        uniqueId = id;
-        next = nullptr;
-    }
-};
-
-class CustomItemsList {
-private:
-    CustomItemNode* head;
-    int itemCount;
-    int nextId;
-
-public:
-    CustomItemsList() {
-        head = nullptr;
-        itemCount = 0;
-        nextId = 1000;
-    }
-    
-    ~CustomItemsList() { clear(); }
-    
-    void clear() {
-        while (head != nullptr) {
-            CustomItemNode* temp = head;
-            head = head->next;
-            delete temp;
-        }
-        itemCount = 0;
-    }
-    
-    CustomItemNode* findByName(const string& name) {
-        CustomItemNode* current = head;
-        while (current != nullptr) {
-            if (equalsIgnoreCase(current->name, name)) return current;
-            current = current->next;
-        }
-        return nullptr;
-    }
-    
-    int addOrUpdate(const string& name, int quantity) {
-        CustomItemNode* existing = findByName(name);
-        
-        if (existing != nullptr) {
-            existing->purchaseCount += quantity;
-            return existing->uniqueId;
-        }
-        
-        CustomItemNode* newNode = new CustomItemNode(name, nextId++);
-        newNode->purchaseCount = quantity;
-        newNode->next = head;
-        head = newNode;
-        itemCount++;
-        
-        return newNode->uniqueId;
-    }
-    
-    CustomItemNode* getHighestPurchaseItem() {
-        if (head == nullptr) return nullptr;
-        
-        CustomItemNode* highest = head;
-        CustomItemNode* current = head->next;
-        
-        while (current != nullptr) {
-            if (current->purchaseCount > highest->purchaseCount) {
-                highest = current;
-            }
-            current = current->next;
-        }
-        return highest;
-    }
-    
-    bool remove(const string& name) {
-        if (head == nullptr) return false;
-        
-        if (equalsIgnoreCase(head->name, name)) {
-            CustomItemNode* temp = head;
-            head = head->next;
-            delete temp;
-            itemCount--;
-            return true;
-        }
-        
-        CustomItemNode* current = head;
-        while (current->next != nullptr) {
-            if (equalsIgnoreCase(current->next->name, name)) {
-                CustomItemNode* temp = current->next;
-                current->next = temp->next;
-                delete temp;
-                itemCount--;
-                return true;
-            }
-            current = current->next;
-        }
-        return false;
-    }
-    
-    int size() const { return itemCount; }
-    bool isEmpty() const { return head == nullptr; }
-    CustomItemNode* getHead() const { return head; }
-};
-
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *                    UNIFIED ITEMS ARRAY (Single Storage)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * This class stores ALL items (both default and custom) in a single array.
+ * Items are sorted by purchase frequency - top 10 are displayed as "frequent items"
+ * 
+ * KEY FEATURES:
+ * - Single unified storage for all items
+ * - Automatic sorting by purchase count
+ * - Top 10 items shown as frequent items
+ * - Custom items automatically get promoted when purchased frequently
+ */
 class FrequentItemsArray {
 private:
-    FrequentItem items[MAX_FREQUENT_ITEMS];
+    FrequentItem items[MAX_TOTAL_ITEMS];
     int current_size;
+    int nextCustomId;  // ID generator for custom items (starts at 1000)
 
 public:
-    FrequentItemsArray() : current_size(0) {
-        addItem(0, "Milk", 0);
-        addItem(1, "Bread", 0);
-        addItem(2, "Eggs", 0);
-        addItem(3, "Butter", 0);
-        addItem(4, "Cheese", 0);
-        addItem(5, "Chicken", 0);
-        addItem(6, "Rice", 0);
-        addItem(7, "Pasta", 0);
-        addItem(8, "Tomato Sauce", 0);
-        addItem(9, "Orange Juice", 0);
-        sortByFrequency();
+    FrequentItemsArray() : current_size(0), nextCustomId(1000) {
+        // Add default items (id 0-9, isCustom = false)
+        addDefaultItem(0, "Milk");
+        addDefaultItem(1, "Bread");
+        addDefaultItem(2, "Eggs");
+        addDefaultItem(3, "Butter");
+        addDefaultItem(4, "Cheese");
+        addDefaultItem(5, "Chicken");
+        addDefaultItem(6, "Rice");
+        addDefaultItem(7, "Pasta");
+        addDefaultItem(8, "Tomato Sauce");
+        addDefaultItem(9, "Orange Juice");
     }
 
+    // Add a default (non-custom) item
+    void addDefaultItem(int id, const string& name) {
+        if (current_size >= MAX_TOTAL_ITEMS) return;
+        items[current_size] = FrequentItem(id, name, 0, false);
+        current_size++;
+    }
+
+    // Get item at index (O(1) access)
     FrequentItem getItem(int index) const {
         if (index < 0 || index >= current_size) {
             return FrequentItem();
@@ -183,35 +103,72 @@ public:
         return getItem(index);
     }
 
-    int size() const { return current_size; }
-    bool isFull() const { return current_size >= MAX_FREQUENT_ITEMS; }
+    // Total number of items stored
+    int totalSize() const { return current_size; }
+    
+    // Number of items to display (max 10)
+    int size() const { 
+        return (current_size < MAX_DISPLAY_ITEMS) ? current_size : MAX_DISPLAY_ITEMS; 
+    }
+    
+    bool isFull() const { return current_size >= MAX_TOTAL_ITEMS; }
     bool isEmpty() const { return current_size == 0; }
 
-    // Case-insensitive search by name
+    // Case-insensitive search by name - searches ALL items
     int findByName(const string& name) const {
         for (int i = 0; i < current_size; i++) {
             if (equalsIgnoreCase(items[i].name, name)) return i;
         }
         return -1;
     }
-
-    bool addItem(int id, string name, int purchaseCount = 0) {
-        // Check if item with same name already exists (case-insensitive)
-        int existingIndex = findByName(name);
-        if (existingIndex != -1) {
-            // Item exists - increment its purchase count
-            items[existingIndex].purchaseCount += (purchaseCount > 0 ? purchaseCount : 1);
-            sortByFrequency();
-            return true;
+    
+    // Find item by ID
+    int findById(int itemId) const {
+        for (int i = 0; i < current_size; i++) {
+            if (items[i].id == itemId) return i;
         }
-        
-        // Item doesn't exist - add new if not full
-        if (isFull()) return false;
-        items[current_size] = FrequentItem(id, name, purchaseCount);
-        current_size++;
-        return true;
+        return -1;
     }
 
+    /**
+     * Add or update an item with purchase count
+     * - If item exists: increment purchase count
+     * - If new item: add to the array
+     * Returns the item's ID
+     */
+    int addOrUpdateItem(const string& name, int quantity = 1, int forceId = -1) {
+        // Check if item already exists (case-insensitive)
+        int existingIndex = findByName(name);
+        
+        if (existingIndex != -1) {
+            // Item exists - increment purchase count
+            items[existingIndex].purchaseCount += quantity;
+            sortByFrequency();
+            return items[existingIndex].id;
+        }
+        
+        // New item - add it
+        if (isFull()) {
+            // Array full - can't add more items
+            return -1;
+        }
+        
+        // Assign ID: use forceId if provided, otherwise generate new custom ID
+        int newId = (forceId >= 0) ? forceId : nextCustomId++;
+        
+        // Ensure nextCustomId stays ahead of manually assigned IDs
+        if (newId >= nextCustomId) {
+            nextCustomId = newId + 1;
+        }
+        
+        items[current_size] = FrequentItem(newId, name, quantity, true);
+        current_size++;
+        sortByFrequency();
+        
+        return newId;
+    }
+
+    // Sort items by purchase count (descending) - Bubble Sort
     void sortByFrequency() {
         for (int i = 0; i < current_size - 1; i++) {
             for (int j = 0; j < current_size - i - 1; j++) {
@@ -224,12 +181,15 @@ public:
         }
     }
 
+    // Increment purchase count for item at index
     void incrementPurchaseCount(int index) {
         if (index >= 0 && index < current_size) {
             items[index].purchaseCount++;
+            sortByFrequency();
         }
     }
 
+    // Get purchase count for item at index
     int getPurchaseCount(int index) const {
         if (index >= 0 && index < current_size) {
             return items[index].purchaseCount;
@@ -237,88 +197,72 @@ public:
         return 0;
     }
 
+    // Increment purchase count by item ID
     bool incrementPurchaseCountById(int itemId) {
-        for (int i = 0; i < current_size; i++) {
-            if (items[i].id == itemId) {
-                items[i].purchaseCount++;
-                return true;
-            }
+        int index = findById(itemId);
+        if (index != -1) {
+            items[index].purchaseCount++;
+            sortByFrequency();
+            return true;
         }
         return false;
     }
 
-    int search(string name) const {
+    // Search by name (returns index)
+    int search(const string& name) const {
         return findByName(name);
     }
 
-    int getMinPurchaseIndex() const {
-        if (current_size == 0) return -1;
-        int minIndex = 0;
-        for (int i = 1; i < current_size; i++) {
-            if (items[i].purchaseCount < items[minIndex].purchaseCount) {
-                minIndex = i;
-            }
-        }
-        return minIndex;
-    }
-    
-    int getMinPurchaseCount() const {
-        int minIndex = getMinPurchaseIndex();
-        if (minIndex == -1) return 0;
-        return items[minIndex].purchaseCount;
-    }
-    
+    // Get last item (lowest frequency in display range)
     FrequentItem getLastItem() const {
-        if (current_size == 0) return FrequentItem();
-        return items[current_size - 1];
+        int displaySize = size();
+        if (displaySize == 0) return FrequentItem();
+        return items[displaySize - 1];
     }
     
+    // Reset to default state (10 default items with 0 purchase count)
     void resetToDefaults() {
         current_size = 0;
-        addItem(0, "Milk", 0);
-        addItem(1, "Bread", 0);
-        addItem(2, "Eggs", 0);
-        addItem(3, "Butter", 0);
-        addItem(4, "Cheese", 0);
-        addItem(5, "Chicken", 0);
-        addItem(6, "Rice", 0);
-        addItem(7, "Pasta", 0);
-        addItem(8, "Tomato Sauce", 0);
-        addItem(9, "Orange Juice", 0);
-        sortByFrequency();
-    }
-    
-    bool replaceItem(int index, int newId, string name, int purchaseCount) {
-        if (index < 0 || index >= current_size) return false;
-        
-        // Check if item with same name already exists (case-insensitive)
-        int existingIndex = findByName(name);
-        if (existingIndex != -1 && existingIndex != index) {
-            // Item already exists - just merge purchase counts, don't replace
-            items[existingIndex].purchaseCount += purchaseCount;
-            sortByFrequency();
-            return true;  // Keep 10 items, merged into existing
-        }
-        
-        // No duplicate - replace the item at index
-        items[index] = FrequentItem(newId, name, purchaseCount, true);
-        return true;
-    }
-    
-    int getNextId() const {
-        int maxId = 0;
-        for (int i = 0; i < current_size; i++) {
-            if (items[i].id > maxId) maxId = items[i].id;
-        }
-        return maxId + 1;
+        nextCustomId = 1000;
+        addDefaultItem(0, "Milk");
+        addDefaultItem(1, "Bread");
+        addDefaultItem(2, "Eggs");
+        addDefaultItem(3, "Butter");
+        addDefaultItem(4, "Cheese");
+        addDefaultItem(5, "Chicken");
+        addDefaultItem(6, "Rice");
+        addDefaultItem(7, "Pasta");
+        addDefaultItem(8, "Tomato Sauce");
+        addDefaultItem(9, "Orange Juice");
     }
 
-    void display() const {
-        cout << "\n=== FREQUENT ITEMS ===" << endl;
-        for (int i = 0; i < current_size; i++) {
-            cout << "[" << i << "] " << items[i].name 
-                 << " (Purchases: " << items[i].purchaseCount << ")" << endl;
+    // Get next available custom ID
+    int getNextId() const {
+        return nextCustomId;
+    }
+    
+    // Set next custom ID (used for data restoration)
+    void setNextId(int id) {
+        if (id >= nextCustomId) {
+            nextCustomId = id;
         }
+    }
+
+    // Display items (for debugging)
+    void display() const {
+        cout << "\n=== ALL ITEMS (Top " << size() << " shown as frequent) ===" << endl;
+        for (int i = 0; i < current_size; i++) {
+            string marker = (i < MAX_DISPLAY_ITEMS) ? "[FREQ] " : "[    ] ";
+            cout << marker << "[" << i << "] " << items[i].name 
+                 << " (ID: " << items[i].id 
+                 << ", Purchases: " << items[i].purchaseCount 
+                 << ", Custom: " << (items[i].isCustom ? "Yes" : "No") << ")" << endl;
+        }
+    }
+    
+    // Get all items as a pointer (for iteration)
+    const FrequentItem* getAllItems() const {
+        return items;
     }
 };
 

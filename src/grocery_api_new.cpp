@@ -34,11 +34,10 @@ using namespace std;
 //                         GLOBAL DATA STRUCTURES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-static FrequentItemsArray frequentItems;  // Array for O(1) access
+static FrequentItemsArray allItems;        // UNIFIED Array for ALL items (top 10 = frequent)
 static LinkedList cart;                    // Linked List for shopping cart
 static Stack undoStack;                    // Stack for undo operations
 static Queue checkoutQueue;                // Queue for checkout process
-static CustomItemsList customItems;        // Linked List for tracking custom items
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //                    HELPER: Convert C++ string to C string
@@ -62,17 +61,17 @@ char* string_to_cstr(const string& str) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Get number of frequent items
+ * Get number of frequent items (top 10)
  */
 EXPORT int api_get_frequent_items_count() {
-    return frequentItems.size();
+    return allItems.size();  // Returns max 10
 }
 
 /**
  * Get frequent item at index (O(1) access!)
  */
 EXPORT const char* api_get_frequent_item(int index) {
-    FrequentItem item = frequentItems[index];
+    FrequentItem item = allItems[index];
     
     ostringstream json;
     json << "{\"id\":" << item.id << ","
@@ -83,14 +82,15 @@ EXPORT const char* api_get_frequent_item(int index) {
 }
 
 /**
- * Get all frequent items as JSON array
+ * Get all frequent items as JSON array (top 10 by purchase count)
  */
 EXPORT const char* api_get_all_frequent_items() {
     ostringstream json;
     json << "[";
     
-    for (int i = 0; i < frequentItems.size(); i++) {
-        FrequentItem item = frequentItems[i];
+    int displayCount = allItems.size();  // Max 10
+    for (int i = 0; i < displayCount; i++) {
+        FrequentItem item = allItems[i];
         if (i > 0) json << ",";
         json << "{\"id\":" << item.id << ","
              << "\"name\":\"" << item.name << "\","
@@ -106,7 +106,7 @@ EXPORT const char* api_get_all_frequent_items() {
  * Increment purchase count for item by ID
  */
 EXPORT void api_increment_purchase_count_by_id(int itemId) {
-    frequentItems.incrementPurchaseCountById(itemId);
+    allItems.incrementPurchaseCountById(itemId);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -264,34 +264,8 @@ EXPORT void api_clear_undo_stack() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Check if a custom item should be promoted to frequent items
- */
-void checkAndPromoteCustomItems() {
-    CustomItemNode* topCustom = customItems.getHighestPurchaseItem();
-    if (topCustom == nullptr) {
-        return;
-    }
-    
-    FrequentItem lastFrequent = frequentItems.getLastItem();
-    
-    if (topCustom->purchaseCount > lastFrequent.purchaseCount) {
-        int lastIndex = frequentItems.size() - 1;
-        
-        frequentItems.replaceItem(
-            lastIndex,
-            topCustom->uniqueId,
-            topCustom->name,
-            topCustom->purchaseCount
-        );
-        
-        customItems.remove(topCustom->name);
-        frequentItems.sortByFrequency();
-    }
-}
-
-/**
  * Move all cart items to checkout queue (FIFO)
- * Also updates purchase counts
+ * Also updates purchase counts in the UNIFIED allItems array
  */
 EXPORT void api_start_checkout() {
     Node* current = cart.head();
@@ -301,21 +275,26 @@ EXPORT void api_start_checkout() {
         checkoutQueue.enqueue(item);
         
         int productId = item.getProductId();
+        string itemName = item.getName();
+        int quantity = item.getQuantity();
         
-        if (productId == -1 || productId >= 1000) {
-            customItems.addOrUpdate(item.getName(), item.getQuantity());
-        } else {
-            for (int i = 0; i < item.getQuantity(); i++) {
-                frequentItems.incrementPurchaseCountById(productId);
+        // UNIFIED APPROACH: All items go into the same array
+        // - If item exists (by ID or name): increment purchase count
+        // - If new custom item: add to array with new ID
+        if (productId >= 0 && productId < 1000) {
+            // Default item (ID 0-9) - increment by ID
+            for (int i = 0; i < quantity; i++) {
+                allItems.incrementPurchaseCountById(productId);
             }
+        } else {
+            // Custom item - add or update by name
+            allItems.addOrUpdateItem(itemName, quantity, productId);
         }
         
         current = current->next();
     }
     
-    frequentItems.sortByFrequency();
-    checkAndPromoteCustomItems();
-    
+    // Sort is already done inside addOrUpdateItem/incrementPurchaseCountById
     cart.clear();
     undoStack.clear();
 }
@@ -383,29 +362,22 @@ EXPORT const char* api_get_queue_items() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Restore a custom item with its purchase count (for data persistence)
+ * Restore an item with its purchase count (for data persistence)
+ * Works with UNIFIED storage - all items in one array
  */
 EXPORT void api_restore_custom_item(const char* name, int purchaseCount, int itemId) {
-    bool foundInFrequent = false;
-    for (int i = 0; i < frequentItems.size(); i++) {
-        FrequentItem item = frequentItems[i];
-        if (item.id == itemId) {
-            for (int j = 0; j < purchaseCount; j++) {
-                frequentItems.incrementPurchaseCountById(itemId);
-            }
-            foundInFrequent = true;
-            break;
-        }
-    }
+    // Try to find by ID first
+    int index = allItems.findById(itemId);
     
-    if (!foundInFrequent) {
-        for (int i = 0; i < purchaseCount; i++) {
-            customItems.addOrUpdate(name, 1);
+    if (index != -1) {
+        // Item found by ID - increment its purchase count
+        for (int j = 0; j < purchaseCount; j++) {
+            allItems.incrementPurchaseCountById(itemId);
         }
-        checkAndPromoteCustomItems();
+    } else {
+        // Item not found - add it as new custom item
+        allItems.addOrUpdateItem(name, purchaseCount, itemId);
     }
-    
-    frequentItems.sortByFrequency();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -413,13 +385,12 @@ EXPORT void api_restore_custom_item(const char* name, int purchaseCount, int ite
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Reset all data structures
+ * Reset all data structures (keeps items but clears cart/undo/queue)
  */
 EXPORT void api_reset_all() {
     cart.clear();
     undoStack.clear();
     checkoutQueue.clear();
-    customItems.clear();
 }
 
 /**
@@ -429,8 +400,7 @@ EXPORT void api_factory_reset() {
     cart.clear();
     undoStack.clear();
     checkoutQueue.clear();
-    customItems.clear();
-    frequentItems.resetToDefaults();
+    allItems.resetToDefaults();
 }
 
 /**
