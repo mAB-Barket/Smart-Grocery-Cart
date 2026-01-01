@@ -1381,7 +1381,8 @@ section {
     max-width: 600px;
     width: 90%;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow-y: visible;
+    overflow-x: hidden;
     animation: modalSlide 0.3s ease;
 }
 
@@ -1526,6 +1527,8 @@ section {
    ======================= */
 .reset-modal {
     max-width: 450px;
+    max-height: fit-content;
+    overflow: visible;
 }
 
 .reset-modal-body {

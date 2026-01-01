@@ -2,6 +2,8 @@
 
 A **unified** implementation of fundamental data structures through an interactive grocery shopping simulation. This project demonstrates practical applications of **Arrays, Linked Lists, Stacks, and Queues** using **C++ with a Python Flask bridge** to connect with a web interface.
 
+**📱 Now available as a PWA (Progressive Web App) - Install on Android!**
+
 ---
 
 ## 🚀 Quick Start (Easy!)
@@ -10,6 +12,14 @@ A **unified** implementation of fundamental data structures through an interacti
 1. **Double-click `START.bat`** (or `build.bat`)
 2. Open http://localhost:5000 in your browser
 3. That's it! 🎉
+
+### 📱 Install on Android:
+1. Run the app on your PC (using START.bat)
+2. Make sure your phone and PC are on the **same WiFi network**
+3. Find your PC's IP address: `ipconfig` in command prompt (look for IPv4)
+4. On your Android phone, open Chrome and go to `http://YOUR_PC_IP:5000`
+5. Tap the **"Add to Home Screen"** or **"Install"** prompt
+6. The app will be installed like a native Android app! 🎉
 
 ### Requirements:
 - ✅ **Python 3.x** - [Download here](https://www.python.org/downloads/) 
@@ -59,6 +69,10 @@ Smart_Grocery_Cart/
 │
 ├── 📁 web/                      # Web Interface (UI Only)
 │   ├── index.html               # Main HTML file
+│   ├── manifest.json            # PWA manifest (Android install)
+│   ├── sw.js                    # Service Worker (PWA caching)
+│   ├── 📁 icons/                # PWA app icons
+│   │   └── icon.svg             # App icon (all sizes)
 │   ├── 📁 css/
 │   │   └── styles.css           # Styling
 │   └── 📁 js/
@@ -189,7 +203,37 @@ checkoutQueue.dequeue();       // Remove from front (oldest first)
 - **Python Flask** - Web server bridge
 - **ctypes** - Python-C++ interop
 - **HTML/CSS/JS** - Web interface
+- **PWA** - Progressive Web App (Android installable)
 - **Font Awesome** - Icons
+
+---
+
+## 📱 PWA (Progressive Web App) Features
+
+This app can be **installed on Android devices** (Android 5.0 to Android 15+) as a native-like app!
+
+### PWA Files Added:
+| File | Purpose |
+|------|---------|
+| `web/manifest.json` | App metadata (name, icons, theme) |
+| `web/sw.js` | Service Worker for caching |
+| `web/icons/icon.svg` | App icon |
+
+### How to Install on Android:
+1. **Start the server** on your PC (run `START.bat`)
+2. **Find your PC's IP**: Open Command Prompt, type `ipconfig`, look for `IPv4 Address`
+3. **Connect your phone** to the same WiFi as your PC
+4. **Open Chrome** on your Android phone
+5. **Navigate to** `http://YOUR_PC_IP:5000` (e.g., `http://192.168.1.5:5000`)
+6. **Tap "Install"** or "Add to Home Screen" when prompted
+7. **Done!** The app appears on your home screen like a native app
+
+### PWA Benefits:
+- ✅ **No App Store needed** - Install directly from browser
+- ✅ **Native app feel** - Fullscreen, no browser UI
+- ✅ **Works on Android 5.0+** - Supports all Android versions
+- ✅ **Fast loading** - Static assets are cached
+- ✅ **Home screen icon** - Quick access like native apps
 
 ---
 
